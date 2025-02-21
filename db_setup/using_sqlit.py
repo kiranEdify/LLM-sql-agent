@@ -49,7 +49,7 @@ def create_db():
         "order_id": [1, 2],
         "customer_id": [1, 2],
         "order_date": ["2024-02-10", "2024-02-15"],
-        "total_amount": [51.48, 49.74]
+        "total_amount": [51.48, 23.97]
     })
 
     # 6. Define data for order items

@@ -8,7 +8,7 @@ def create_db():
     # engine = create_engine("sqlite:///:memory:", echo=True)
 
     # Create a persistent SQLite database in a file
-    engine = create_engine("sqlite:///electrical_parts.db", echo=True)
+    engine = create_engine("sqlite:///electrical_parts_original.db", echo=True)
 
     # 1. Define data for suppliers
     suppliers_df = pd.DataFrame({

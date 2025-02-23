@@ -14,15 +14,20 @@ lm = dspy.LM("openai/gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
 dspy.configure(lm=lm)
 
 # Initialize ChromaDB client
-chroma_client = chromadb.PersistentClient(path="./chroma_db")  # Ensure schema is stored here
+chroma_client = chromadb.PersistentClient(
+    path="./chroma_db"
+)  # Ensure schema is stored here
 db_collection = chroma_client.get_collection(name="sql_schema")
+
 
 # Create SQLite persistent database connection
 def create_db_connection():
     engine = create_engine("sqlite:///electrical_parts.db", echo=True)
     return engine.connect()
 
+
 # DB_CONN = create_db_connection()
+
 
 def validate_sql_query(query: str) -> bool:
     """Validate that the query is a SELECT statement and is not empty."""
@@ -34,10 +39,10 @@ def validate_sql_query(query: str) -> bool:
         )
     return True
 
+
 def execute_sql(query: str):
     """Executes the SQL query in SQLite and fetches results."""
     try:
-       
 
         validate_sql_query(query)
         with create_db_connection() as conn:
@@ -45,6 +50,7 @@ def execute_sql(query: str):
         return result
     except Exception as e:
         return {"error": str(e)}
+
 
 class RetrieveSchema(dspy.Module):
     def forward(self, user_query: str):
@@ -55,7 +61,6 @@ class RetrieveSchema(dspy.Module):
             query_texts=[user_query], n_results=5, where={"type": "table"}
         )
         tables = [doc["table_name"] for doc in table_results.get("metadatas", [])[0]]
-        
 
         # Retrieve relevant columns
         column_results = db_collection.query(
@@ -63,42 +68,41 @@ class RetrieveSchema(dspy.Module):
             n_results=5,
             where={"$and": [{"type": {"$eq": "column"}}, {"table": {"$in": tables}}]},
         )
-        
-        columns = [ (doc["table"], doc["columns"]) for doc in column_results.get("metadatas", [])[0]  ]
-        
+
+        columns = [
+            (doc["table"], doc["columns"])
+            for doc in column_results.get("metadatas", [])[0]
+        ]
 
         # Retrieve table relationships
         relationship_results = db_collection.query(
             query_texts=[user_query], n_results=3, where={"type": "relationship"}
         )
-        relationships =  [
-                (doc["table1"], doc["table2"], doc["relationship_type"])
-                for doc in relationship_results.get("metadatas", [])[0]
-            ]
-        
+        relationships = [
+            (doc["table1"], doc["table2"], doc["relationship_type"])
+            for doc in relationship_results.get("metadatas", [])[0]
+        ]
 
-        print("\n\n------------------------------- RAG DATA ---------------------------- \n")
-        pprint({
-            "tables": tables, 
-            "columns": columns,
-            "relationships": relationships
-            })
+        print(
+            "\n\n------------------------------- RAG DATA ---------------------------- \n"
+        )
+        pprint({"tables": tables, "columns": columns, "relationships": relationships})
 
-        return {
-            "tables": tables, 
-            "columns": columns,
-            "relationships": relationships
-            }
+        return {"tables": tables, "columns": columns, "relationships": relationships}
+
 
 class GenerateSQL(dspy.Signature):
     question: str = dspy.InputField()
     context: str = dspy.InputField()
     sql_query: str = dspy.OutputField()
     # result: list = dspy.OutputField()
-    answer: str = dspy.OutputField(desc="Answer to the user's question based on the query being executed")
+    answer: str = dspy.OutputField(
+        desc="Answer to the user's question based on the query being executed"
+    )
     # summary: str = dspy.OutputField(
     #     desc="Summary should be based on the user's question and execution result"
     # )
+
 
 sql_query_generator = dspy.ReAct(
     GenerateSQL,
@@ -107,20 +111,25 @@ sql_query_generator = dspy.ReAct(
     ],
 )
 
+
 def sql_agent(user_query: str):
     retrieve_schema = RetrieveSchema()
     query_context = retrieve_schema(user_query)
-    
-    response = sql_query_generator(question=user_query,context=query_context)
-    
-    return response
 
+    response = sql_query_generator(question=user_query, context=query_context)
+
+    print("SQL-agent-response")
+    print(response)
+
+    return response.answer
 
 
 if __name__ == "__main__":
     # main()
     # user_query = " list me all the customers names"
-    user_query = "list the stock quantity of product id 1 with price and it's category name"
+    user_query = (
+        "list the stock quantity of product id 1 with price and it's category name"
+    )
     # user_query = "what is the total amount for customer alice cooper"
     # user_query = "what are the products purchased by customer bob martin"
     # user_query = "what is the supplier name of product id '1' and give his address"

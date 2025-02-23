@@ -12,7 +12,6 @@ load_dotenv()
 AVAILABLE_MODELS = [
     "openai/gpt-4o-mini",
     "openai/gpt-3.5-turbo",
-    "openai/gpt-4"
 ]
 
 # Streamlit dropdown for model selection

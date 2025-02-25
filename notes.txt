@@ -1,0 +1,14 @@
+# Configure DSPy Language Model
+# lm = dspy.LM("openai/gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
+lm = dspy.LM("ollama_chat/deepseek-r1:32b", endpoint="http://localhost:5500")
+dspy.configure(lm=lm)
+
+
+
+
+ curl http://localhost:5500/api/chat -d '{"model":"llama3.1","messages":[{"role":"user","content":"why is the sky blue?"}], "stream":false}'
+
+
+
+
+curl http://localhost:11411/api/chat -d '{"model": "llama3.1","messages": [{"role": "user","content": "why is the sky blue?"}],"stream": false}'

@@ -9,9 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configure DSPy Language Model
-lm = dspy.LM("openai/gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
-dspy.configure(lm=lm)
+
 
 # Initialize ChromaDB client
 chroma_client = chromadb.PersistentClient(
@@ -112,14 +110,23 @@ sql_query_generator = dspy.ReAct(
 )
 
 
-def sql_agent(user_query: str):
+def sql_agent(user_query: str,model):
+    # Configure DSPy Language Model
+    # lm = dspy.LM("openai/gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
+    lm = dspy.LM(f"ollama_chat/{model or 'llama3.1'}", endpoint="http://localhost:5500")
+    dspy.configure(lm=lm)
+
+    print("\n\n=======SQL-agent===============")
     retrieve_schema = RetrieveSchema()
     query_context = retrieve_schema(user_query)
 
     response = sql_query_generator(question=user_query, context=query_context)
 
-    print("SQL-agent-response")
+    
+    print("\nMESSAGE:\n", user_query)
+    print("\n\n")
     print(response)
+    print("\n\n")
 
     return response.answer
 

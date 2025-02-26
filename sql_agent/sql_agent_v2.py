@@ -110,10 +110,10 @@ sql_query_generator = dspy.ReAct(
 )
 
 
-def sql_agent(user_query: str,model):
+def sql_agent(user_query: str,model=None):
     # Configure DSPy Language Model
     # lm = dspy.LM("openai/gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
-    lm = dspy.LM(f"ollama_chat/{model or 'llama3.1'}", endpoint="http://localhost:5500")
+    lm = dspy.LM(f"ollama_chat/{model or 'llama3.1'}", endpoint="http://localhost:11434")
     dspy.configure(lm=lm)
 
     print("\n\n=======SQL-agent===============")

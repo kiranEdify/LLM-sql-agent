@@ -2,7 +2,7 @@ import os
 import json
 from dotenv import load_dotenv
 import gradio as gr
-from ollama import ChatResponse, chat
+from ollama import  Client
 from db_setup.place_order_v2 import place_order
 from db_setup.cancel_order import cancel_order
 from sql_agent.sql_agent_v2 import sql_agent
@@ -11,7 +11,15 @@ from .prompts import prompts
 # Initialization
 load_dotenv(override=True)
 
+ollama_client = Client(
+    host ="http://localhost:11434",
+
+)
+
 MODEL = "llama3.1"
+
+
+
 
 # Define functions
 
@@ -119,16 +127,17 @@ def chatAssist_ollama():
                 -Give short, courteous answers, no more than 1 sentence. 
                 -Before placing an order, display a bill representation as a table. 
                 -After placing an order, use creative emojis and end gracefully. 
-                -efore canceling an order, depict the order details as a table. 
+                -Before canceling an order, depict the order details as a table. 
+            
                 -Always be accurate. If you don't know the answer, say so. 
         """
         # system_message = prompts["ollama_llama_prompt"]
         messages = [{'role': 'system', 'content': system_message}] + history + [{'role': 'user', 'content': message}]
 
-        response = chat(
-            MODEL,
+        response = ollama_client.chat(
+            model=MODEL,
             messages=messages,
-            tools=tools
+            tools=tools,
         )
         print("\n====BEGIN-Chat=======\n")
         print("\nMessage:\n",message)
@@ -139,7 +148,12 @@ def chatAssist_ollama():
                 print("\nTool Response: \n", tool_response)
                 messages.append(response.message)
                 messages.append(tool_response)
-            response = chat(MODEL, messages=messages)
+            
+            response = ollama_client.chat(
+                model=MODEL, 
+                messages=messages,
+                
+            )
 
         print("\nResponse:\n", response.message.content) 
         print("\n====END-Chat=======\n")
@@ -154,7 +168,7 @@ def chatAssist_ollama():
 
         # Dropdown for LLM model selection
         model_selector = gr.Dropdown(
-            choices=["llama3.1", "deepseek-r1:32b"],
+            choices=["llama3.1","llama3.1:70b" ,"deepseek-r1:32b","deepseek-r1:8b","mistral"],
             label="Select LLM Model",
             # value="GPT-4",
             interactive=True
@@ -179,9 +193,10 @@ def chatAssist_ollama():
             fn=chat_with_selected_model,
             type="messages",
             examples=["What can you assist?", "Hi", "View all products"],
+            fill_height=True
         )
 
-    chat_assist.launch()
+    chat_assist.launch(share=True)
 
     # OLD - WAY
     # gr.ChatInterface(

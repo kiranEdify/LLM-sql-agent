@@ -13,7 +13,12 @@ AVAILABLE_MODELS = [
     # "openai/gpt-4o-mini",
     # "openai/gpt-3.5-turbo",
     "llama3.1",
-    "deepseek-r1:32b"
+    "deepseek-r1:32b",
+    "deepseek-r1:8b",
+    "qwen2.5:14b",
+    "qwen2.5",
+    "mistral",
+    "llama3.1:70b",
 ]
 
 # Streamlit dropdown for model selection
@@ -21,7 +26,7 @@ selected_model = st.sidebar.selectbox("Choose LLM Model", AVAILABLE_MODELS, inde
 
 # Configure DSPy Language Model
 # lm = dspy.LM("openai/gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
-lm = dspy.LM(f"ollama_chat/{selected_model}", endpoint="http://localhost:5500")
+lm = dspy.LM(f"ollama_chat/{selected_model}", endpoint="http://localhost:11434")
 dspy.configure(lm=lm)
 
 # Initialize ChromaDB client

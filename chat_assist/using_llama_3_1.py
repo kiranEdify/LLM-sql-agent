@@ -30,7 +30,7 @@ def chatAssist_ollama():
         arguments = tool.function.arguments
         response_content = ""
 
-        if function_name == "sql_agent":
+        if function_name == "get_inventory_details":
             response_content = sql_agent(arguments.get('user_query'),model=llm_to_use)
         elif function_name == "place_order":
             customer_id = arguments.get('customer_id')
@@ -46,90 +46,119 @@ def chatAssist_ollama():
                 'name': tool.function.name
             }
 
+  
     # Tools
     sql_agent_function = {
-            "name": "sql_agent",
-            "description": "only call this function when you want to get data from database inventory. for example list all products available",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "user_query": {
-                        "type": "string",
-                        "description": "natual language statement  ",
-                    },
+    "name": "get_inventory_details",
+    "description": """
+        This function **retrieves inventory data** from the database.(i.e product details,supplier details,stock details,order details)
+        """,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "user_query": {
+                    "type": "string",
+                    "description": """
+                       user question realated to the inventory,supplier,order details.
+                    """,
                 },
-                "required": ["user_query"],
-                "additionalProperties": False
-            }
+            },
+            "required": ["user_query"],
+            "additionalProperties": False
         }
+    }
+
+
 
     place_order_function = {
-            "name": "place_order",
-            "description": "Place a new order for electrical components",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "customer_id": {
-                        "type": "string",
-                        "description": "Unique identifier for the customer"
-                    },
-                    "order_items": {
-                        "type": "array",
-                        "description": "List of products and their quantities",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "product_id": {
-                                    "type": "integer",
-                                    "description": "Unique identifier for the product"
-                                },
-                                "quantity": {
-                                    "type": "integer",
-                                    "description": "Number of items to order"
-                                }
-                            },
-                            "required": ["product_id", "quantity"]
-                        }
-                    }
+        "name": "place_order",
+        "description": """
+            Use this function **only** when the user explicitly requests to place an order.
+        """,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "customer_id": {
+                    "type": "string",
+                    "description": "Unique identifier for the customer placing the order."
                 },
-                "required": ["customer_id", "order_items"]
-            }
+                "order_items": {
+                    "type": "array",
+                    "description": "A list of products and their quantities for the order.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "product_id": {
+                                "type": "integer",
+                                "description": "The unique identifier of the product to order."
+                            },
+                            "quantity": {
+                                "type": "integer",
+                                "description": "The number of units to order."
+                            }
+                        },
+                        "required": ["product_id", "quantity"]
+                    }
+                }
+            },
+            "required": ["customer_id", "order_items"]
         }
+    }
 
     cancel_order_function = {
-            "name": "cancel_order",
-            "description": "cancel an existingly placed order for a product",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "order_id": {
-                        "type": "string",
-                        "description": "unique id of the existing order placed by the particular customer",
-                    },
+        "name": "cancel_order",
+        "description": """
+            Use this function **only** when the user requests to cancel an existing order.
+        """,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the order to cancel."
                 },
-                "required": ["order_id"],
-                "additionalProperties": False
-            }
+            },
+            "required": ["order_id"],
+            "additionalProperties": False
         }
+    }
 
     tools = [
         {"type": "function", "function": sql_agent_function},
         {"type": "function", "function": place_order_function},
         {"type": "function", "function": cancel_order_function}
+    ]
 
-        ]
+
 
     def chat_interface(message, history,llm):
         system_message = """
-            You are a helpful assistant for an electronic distributor company. 
-            Follow these rules:
-                -use function calls only when necessary
-                -Give short, courteous answers, no more than 1 sentence. 
-                -Before placing an order, display a bill representation as a table. 
-                -After placing an order, use creative emojis and end gracefully. 
-                -Before canceling an order, depict the order details as a table. 
-            
-                -Always be accurate. If you don't know the answer, say so. 
+            You are a helpful AI chat  assistant for an electronic distributor company. Follow these rules strictly:
+
+            # CHAT RULES:
+                1. for general talk do not use tools provided , response with your knowledge in a polite manner
+                    eg. user : hi
+                        you : Hello , how can i assist you
+                2. Keep the response short 
+                2. Do not assume or hallucinate always generate response with data provided
+                3. if unclear ask follow up question to the user or simple state 'Please provide more details!'
+
+            # RULES FOR PLACING ORDER:
+                1. Before placing an order list the items with price and units the customer ordered in a table format
+                2. And ask for confirmation before placing the order
+
+            # RULES FOR CANCELING ORDER:
+                1. Before canceling an order list the items with price and units the customer ordered in a table format
+                2. And ask for confirmation before canceling the order
+
+            # TOOL CALL RULES:
+                Do not be tempted to use tools always, use it only when it is absolutely needed to fulfil the user query.
+
+                **available tools:
+                    1. `get_inventory_details` - used to get product,stock,order,supplier details.(eg. list me all products available)
+                    2. `place_order` - used to place order. (eg. i want to place an order)
+                    3. `cancel_order` -  used to cancel order. (eg. i want to cancel an order)
+
         """
         # system_message = prompts["ollama_llama_prompt"]
         messages = [{'role': 'system', 'content': system_message}] + history + [{'role': 'user', 'content': message}]
@@ -139,7 +168,7 @@ def chatAssist_ollama():
             messages=messages,
             tools=tools,
         )
-        print(f"\n====BEGIN-Chat-{llm}=======\n")
+        print("\n====BEGIN-Chat=======\n")
         print("\nMessage:\n",message)
         if response.message.tool_calls:
             print("\nTool calls: \n", response.message.tool_calls)
@@ -168,7 +197,7 @@ def chatAssist_ollama():
 
         # Dropdown for LLM model selection
         model_selector = gr.Dropdown(
-            choices=["llama3.1","llama3.1:70b" ,"deepseek-r1:32b","deepseek-r1:8b","mistral","qwen2.5:14b","qwen2.5","qwen2.5-coder:14b"],
+            choices=["llama3.1","llama3.1:70b" ,"deepseek-r1:32b","deepseek-r1:8b","mistral"],
             label="Select LLM Model",
             # value="GPT-4",
             interactive=True

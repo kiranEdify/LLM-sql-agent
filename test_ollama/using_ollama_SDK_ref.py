@@ -44,7 +44,8 @@ subtract_two_numbers_tool = {
   },
 }
 
-messages = [{'role': 'user', 'content': 'What is three plus one?'}]
+# messages = [{'role':"system","content":"if statement is not clear repy with 'Please retry with different query!' "},{'role': 'user', 'content': 'What is three plus one?'}]
+messages = [{'role':"system","content":"if none of the function could be called reply 'Invlid user statement' "},{'role': 'user', 'content': 'What is three muliply with one?'}]
 print('Prompt:', messages[0]['content'])
 
 available_functions = {

@@ -48,20 +48,23 @@ def chatAssist_ollama():
 
     # Tools
     sql_agent_function = {
-            "name": "sql_agent",
-            "description": "only call this function when you want to get data from database inventory. for example list all products available",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "user_query": {
-                        "type": "string",
-                        "description": "natual language statement  ",
-                    },
-                },
-                "required": ["user_query"],
-                "additionalProperties": False
+      "type": "function",
+      "function": {
+        "name": "sql_agent",
+        "description": "call this function when you want to query inventory. for example list all products available",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "user_query": {
+              "type": "string",
+              "description": "Natural language query being converted to SQL and data fetched from db"
             }
+          },
+          "required": ["user_query"],
+          "additionalProperties": False
         }
+      }
+    }
 
     place_order_function = {
             "name": "place_order",
@@ -121,15 +124,23 @@ def chatAssist_ollama():
 
     def chat_interface(message, history,llm):
         system_message = """
-            You are a helpful assistant for an electronic distributor company. 
+            You are a helpful customer support chatbot assistant for an electronic distributor company named CED. 
             Follow these rules:
-                -use function calls only when necessary
+                - You must assist the user in a polite and kind way.
+                - If the user ask for anything unrelated to electronics 
+                - If any user statement is unclear ask for a clear statement to contiune the conversation.
+                
+                -use provided tools only when necessary
+                    Available tools:
+                        1. `sql_agent`:call this function when you want to fetch details from database. for example "list all products available" and not for general greeting like for example "hi"
+                        2. `place_order`:To Place a new order 
+                        3. `cancel_order`:To cancel an existingly placed order for a product
                 -Give short, courteous answers, no more than 1 sentence. 
                 -Before placing an order, display a bill representation as a table. 
                 -After placing an order, use creative emojis and end gracefully. 
-                -Before canceling an order, depict the order details as a table. 
-            
+                -Before canceling an order, represent the order details fetched from db as a table. 
                 -Always be accurate. If you don't know the answer, say so. 
+                -Do not assume anything on your own.
         """
         # system_message = prompts["ollama_llama_prompt"]
         messages = [{'role': 'system', 'content': system_message}] + history + [{'role': 'user', 'content': message}]

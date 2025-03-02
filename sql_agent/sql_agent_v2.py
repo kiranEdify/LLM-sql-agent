@@ -93,7 +93,7 @@ class GenerateSQL(dspy.Signature):
     question: str = dspy.InputField()
     context: str = dspy.InputField()
     sql_query: str = dspy.OutputField()
-    execution_result: list = dspy.OutputField(desc="sql query execution results")
+    execution_result_observations: list = dspy.OutputField(desc="sql query execution results")
     answer: str = dspy.OutputField(
         desc="Answer to the user's question based on the query being executed"
     )
@@ -130,7 +130,7 @@ def sql_agent(user_query: str,model=None):
 
     output = {
         "answer":response.answer,
-        "execution_result":response.execution_result
+        "execution_result":response.execution_result_observations
     }
     # return response.answer 
     return output

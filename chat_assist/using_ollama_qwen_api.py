@@ -12,28 +12,20 @@ import requests
 # Initialization
 load_dotenv(override=True)
 
-# ollama_client = Client(
-#     host ="http://localhost:11434",
-
-# )
-
-# MODEL = "llama3.1"
-
 
 OLLAMA_HOST = "http://localhost:11434"
-# MODEL = "qwen2.5-coder:32b"
-MODEL = "qwen2.5:32b"
 
-def chat_with_ollama(messages, tools=None):
+
+def chat_with_ollama(messages, tools=None,model="qwen2.5:32b"):
     url = f"{OLLAMA_HOST}/api/chat"
     payload = {
-        "model": MODEL,
+        "model": model,
         "messages": messages,
         "stream": False,
-        "options": {
-            "seed": 101,
-            "temperature": 0
-        }
+        # "options": {
+        #     "seed": 101,
+        #     "temperature": 0
+        # }
     }
     if tools:
         payload["tools"] = tools
@@ -63,6 +55,9 @@ def chatAssist_ollama():
         if not function_name:
             return {"role": "tool", "content": "Error: Missing function name.", "name": "unknown"}
 
+        print("\n====== Tool call - START ==========\n")
+        print(f"function/tool Name: {function_name}")
+        print(f"arguments : {arguments}")
         if function_name == "sql_agent":
             response_content = sql_agent(arguments.get("query"), model=llm_to_use)
         elif function_name == "place_order":
@@ -71,6 +66,7 @@ def chatAssist_ollama():
             response_content = cancel_order(arguments.get("order_id"))
         else:
             response_content = f"Error: Unknown function '{function_name}'."
+        print("\n====== Tool call - END ==========\n")
 
         return {
             "role": "tool", 
@@ -157,36 +153,34 @@ def chatAssist_ollama():
         cancel_order_function
         ]
 
-    def chat_interface(message, history,llm):
-        # system_message = """
-        #     You are a helpful assistant for an Electronic distributor company. 
-        #     Give short, courteous answers, no more than 1 sentence.
-        #     Before placing an order, depict a bill representation as a table.
-        #     After placing an order, use creative emoji and end gracefully.
-        #     Before canceling an order, depict order details as a table fetched from db.
-        #     Always be accurate. If you don't know the answer, say so. and do not assume anything
-        # """
-        system_message = prompts["ollama_qwen_v1"]
-        messages = [{'role': 'system', 'content': system_message}] + history + [{'role': 'user', 'content': message}]
+    def chat_interface(user_msg, history,model="qwen2.5:32b"):
+        system_message = """
+            You are a helpful chat bot assistant for an Electronic parts distributor company named "CED-Consolidated Electrical Distributors, Inc". 
+            Give short, courteous answers, no more than 1 sentence.
+            Before placing an order, depict a bill representation as a table.
+            After placing an order, use creative emoji and end gracefully.
+            Before canceling an order, depict order details as a table fetched from db.
+            Always be accurate. If you don't know the answer, say so. and do not assume anything.
+            **always answer within the domain specified. if anything being asked outside of the domain reply out of scope gracefully 
+        """
+        # system_message = prompts["ollama_qwen_v1"]
+        messages = [{'role': 'system', 'content': system_message}] + history + [{'role': 'user', 'content': user_msg}]
 
-        response = chat_with_ollama(messages,tools)
-        print(f"\n====BEGIN-Chat-{MODEL}=======\n")
+        response = chat_with_ollama(messages,tools,model=model)
+        print(f"\n====BEGIN-Chat-{model}=======\n")
 
         if "message" in response:
             message = response["message"]
-            print("\nMessage:\n", message["content"])
+            print("\nMessage:\n",user_msg)
 
             if "tool_calls" in message and message["tool_calls"]:
-                print("\nTool calls: \n", message["tool_calls"])
                 for tool in message["tool_calls"]:
-                    tool_response = handle_tool_call(tool, llm_to_use=MODEL)
-                    print("\nTool Response: \n", tool_response)
-
+                    tool_response = handle_tool_call(tool, llm_to_use=model)
                     messages.append(message)  # Append the original response
                     messages.append(tool_response)  # Append tool response
 
                 # Call API again with updated messages
-                response = chat_with_ollama(messages)
+                response = chat_with_ollama(messages,model=model)
 
             if "message" in response:
                 print("\nResponse:\n", response["message"]["content"])
@@ -199,11 +193,11 @@ def chatAssist_ollama():
         gr.Markdown("### Multi-LLM Chat Interface")
 
         # Store the selected model in state
-        selected_model = gr.State("qwen2.5-coder:14b")
+        selected_model = gr.State("qwen2.5:32b")
 
         # Dropdown for LLM model selection
         model_selector = gr.Dropdown(
-            choices=["llama3.1","llama3.1:70b" ,"deepseek-r1:32b","deepseek-r1:8b","mistral","qwen2.5:14b","qwen2.5","qwen2.5-coder:14b"],
+            choices=["qwen2.5:32b","llama3.1","llama3.1:70b" ,"deepseek-r1:32b","deepseek-r1:8b","mistral","qwen2.5:14b","qwen2.5","qwen2.5-coder:14b"],
             label="Select LLM Model",
             # value="GPT-4",
             interactive=True
@@ -233,20 +227,7 @@ def chatAssist_ollama():
 
     chat_assist.launch(share=True)
 
-    # OLD - WAY
-    # gr.ChatInterface(
-    #     fn=chat_interface,
-    #     additional_inputs=[
-    #         gr.Dropdown(
-    #         ["cat", "dog", "bird"], label="animal", info="Will add more animals later!"
-    #     )
-    #     ],
-    #     type="messages",
-    #     title="Chat bot",
-    #     # examples=["What can you assist", "Hi", "view all products"],
-    #     ).launch()
-
-
+    
 if __name__ == '__main__':
     chatAssist_ollama()
 

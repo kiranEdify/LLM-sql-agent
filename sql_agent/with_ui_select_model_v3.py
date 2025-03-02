@@ -16,6 +16,7 @@ AVAILABLE_MODELS = [
     "deepseek-r1:32b",
     "deepseek-r1:8b",
     "qwen2.5:14b",
+    "qwen2.5:32b",
     "qwen2.5",
     "mistral",
     "llama3.1:70b",
@@ -81,8 +82,8 @@ def sql_agent(user_query: str):
     response = sql_query_generator(question=user_query, context=query_context)
     return response
 
-st.title("SQL Chatbot")
-st.subheader(f"LLM : {selected_model} (openai)")
+st.title("SQL Agent")
+st.subheader(f"LLM : {selected_model} ")
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
@@ -94,6 +95,7 @@ if st.button("Submit"):
     if user_query:
         response = sql_agent(user_query)
         query_result = execute_sql(response.sql_query)
+    
         
         elapsed_time = round(time.time() - start_time, 2)
         st.session_state.chat_history.append((user_query, response.answer, response.sql_query, query_result, elapsed_time, selected_model))

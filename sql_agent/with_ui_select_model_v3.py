@@ -17,9 +17,12 @@ AVAILABLE_MODELS = [
     "deepseek-r1:8b",
     "qwen2.5:14b",
     "qwen2.5:32b",
+    "qwen2.5:72b",
     "qwen2.5",
     "mistral",
     "llama3.1:70b",
+    "gemma2:27b",
+    "falcon:40b"
 ]
 
 # Streamlit dropdown for model selection
@@ -80,6 +83,12 @@ def sql_agent(user_query: str):
     retrieve_schema = RetrieveSchema()
     query_context = retrieve_schema(user_query)
     response = sql_query_generator(question=user_query, context=query_context)
+
+    print("\nMESSAGE:\n", user_query)
+    print("\n\n")
+    print(response)
+    print("\n\n")
+    
     return response
 
 st.title("SQL Agent")

@@ -30,19 +30,23 @@ def chat_with_ollama(messages, tools=None,model="qwen2.5:32b"):
     if tools:
         payload["tools"] = tools
 
-    # print("================ LLM-payload-START ===========")
-    # print(json.dumps(payload,indent=2))
-    # print("================ LLM-payload-END ===========")
+    print("================ LLM-payload-START ===========\n")
+    print(json.dumps(payload,indent=2))
+    print("================ LLM-payload-END ===========\n")
     
+
     response = requests.post(url, json=payload)
-    # print("================ LLM response-START ===========")
-    # print(json.dumps(response.json(),indent=2))
-    # print("================ LLM response-END ===========")
+    print("================ LLM response-START ===========\n")
+    print(json.dumps(response.json(),indent=2))
+    print("================ LLM response-END ============\n")
     if response.status_code == 200:
         
         return response.json()
     else:
-        raise Exception(f"Error: {response.status_code}, {response.text}")
+        # raise Exception(f"Error: {response.status_code}, {response.text}")
+        error_message = f"LLM API Error: {response.status_code}, {response.text}.\n Clear message history or refresh and try again with different LLM"
+        print(f"LLM API Error: {error_message}\n Clear message history or refresh and try again with different LLM")
+        return {"message": {"role": "assistant", "content": error_message}}
 
 # Define functions
 
@@ -154,16 +158,16 @@ def chatAssist_ollama():
         ]
 
     def chat_interface(user_msg, history,model="qwen2.5:32b"):
-        system_message = """
-            You are a helpful chat bot assistant for an Electronic parts distributor company named "CED-Consolidated Electrical Distributors, Inc". 
-            Give short, courteous answers, no more than 1 sentence.
-            Before placing an order, depict a bill representation as a table.
-            After placing an order, use creative emoji and end gracefully.
-            Before canceling an order, depict order details as a table fetched from db.
-            Always be accurate. If you don't know the answer, say so. and do not assume anything.
-            **always answer within the domain specified. if anything being asked outside of the domain reply out of scope gracefully 
-        """
-        # system_message = prompts["ollama_qwen_v1"]
+        # system_message = """
+        #     You are a helpful chat bot assistant for an Electronic parts distributor company named "CED-Consolidated Electrical Distributors, Inc". 
+        #     Give short, courteous answers, no more than 1 sentence.
+        #     Before placing an order, depict a bill representation as a table.
+        #     After placing an order, use creative emoji and end gracefully.
+        #     Before canceling an order, depict order details as a table fetched from db.
+        #     Always be accurate. If you don't know the answer, say so. and do not assume anything.
+        #     **always answer within the domain specified. if anything being asked outside of the domain reply out of scope gracefully 
+        # """
+        system_message = prompts["ollama_qwen_v1"]
         messages = [{'role': 'system', 'content': system_message}] + history + [{'role': 'user', 'content': user_msg}]
 
         response = chat_with_ollama(messages,tools,model=model)
@@ -197,7 +201,7 @@ def chatAssist_ollama():
 
         # Dropdown for LLM model selection
         model_selector = gr.Dropdown(
-            choices=["qwen2.5:32b","llama3.1","llama3.1:70b" ,"deepseek-r1:32b","deepseek-r1:8b","mistral","qwen2.5:14b","qwen2.5","qwen2.5-coder:14b"],
+            choices=["qwen2.5:32b","qwen2.5:72b","gemma2:27b","falcon:40b","llama3.1","llama3.1:70b" ,"deepseek-r1:32b","deepseek-r1:8b","mistral","qwen2.5:14b","qwen2.5","qwen2.5-coder:14b"],
             label="Select LLM Model",
             # value="GPT-4",
             interactive=True

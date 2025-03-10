@@ -7,6 +7,7 @@ sqlalchemy
 streamlit
 gradio
 ollama
+fastapi
 
 # hugging face
 transformers

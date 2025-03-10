@@ -34,7 +34,7 @@ def chatAssist():
     system_message += "Before placing a order dipict a bill representaion as a table\n"
     system_message += "After placing a order use creative emoji and end greacefully\n"
     system_message += "Before canceling a order dipict a order detail as a table\n"
-    system_message += "Always be accurate. If you don't know the answer, say so."
+    system_message += "Always be accurate. If you don't know the answer, say so. and do not assume or generate data. always repsonse with factual data"
 
 
     sql_agent_function = {
@@ -139,32 +139,34 @@ def chatAssist():
             "tool_call_id": tool_call.id
         }
 
-        print("\n\n From Handle tool call - response")
-        print(response)
-
+        print(f"\n\n Tool-selected: {function_name}")
+        
         return response
 
 
     def chat(message, history):
+        print("\n=========BEGIN-chat==============\n")
+        print("\nQuery:",message)
+
         messages = [{"role": "system", "content": system_message}] + history + [{"role": "user", "content": message}]
         response = openai.chat.completions.create(model=MODEL, messages=messages, tools=tools)
 
-        print("Message list:")
-        print(messages)
-        print(response)
+        
         
         
         if response.choices[0].finish_reason=="tool_calls":
+            
+            print("\nTOOL CALL:")
             message = response.choices[0].message
             response = handle_tool_call(message)
+            print("\ntoolcall-Response:",response)
             messages.append(message)
             messages.append(response)
             response = openai.chat.completions.create(model=MODEL, messages=messages)
 
-            print("\n\nMessage list:")
-            print(messages)
-            print(response)
         
+        print("\nFinal-response:",response.choices[0].message.content)
+        print("\n=========END-chat==============\n")
         return response.choices[0].message.content
 
 

@@ -1,8 +1,7 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import os
+
 import json
+import os
+from pydantic import BaseModel
 from dotenv import load_dotenv
 from openai import OpenAI
 from ..db_setup.place_order_v2 import place_order
@@ -11,33 +10,22 @@ from ..sql_agent.sql_agent_v2 import sql_agent
 from ..chat_assist.prompts import prompts
 from ..utils.loggers import log_message  # Import the logging function
 
-# origins = [
-#     "http://127.0.0.1",
-#     "http://localhost:5174",
-# ]
 
 # Load environment variables
 load_dotenv(override=True)
+
+openai = OpenAI()
+MODEL = "gpt-4o-mini"
 
 openai_api_key = os.getenv('OPENAI_API_KEY')
 if not openai_api_key:
     raise RuntimeError("OpenAI API Key not set")
 
-app = FastAPI()
-openai = OpenAI()
-MODEL = "gpt-4o-mini"
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 class ChatRequest(BaseModel):
-    message: str
-    history: list = []
+        message: str
+        history: list = []
+
 
 def handle_tool_call(message):
     tool_call = message.tool_calls[0]
@@ -45,7 +33,7 @@ def handle_tool_call(message):
     arguments = json.loads(tool_call.function.arguments)
     response_content = ""
 
-    log_message("TOOL-Execution-Start", f"function_name: {function_name}\narguments: {arguments}")
+    log_message("TOOL-CALL-START", f"function_name: {function_name}\narguments: {arguments}")
 
     if function_name == "place_order":
         response_content = place_order(arguments.get('customer_id'), arguments.get('order_items'))
@@ -54,15 +42,16 @@ def handle_tool_call(message):
     elif function_name == "sql_agent":
         response_content = sql_agent(arguments.get('query'))
 
-    log_message("TOOL-Execution-End", f"response_content:\n {response_content}")
+    log_message("TOOL-CALL-ENDED", f"response_content: {response_content}")
 
     return {"role": "tool", "content": json.dumps(response_content), "tool_call_id": tool_call.id}
 
-@app.post("/chat")
-def chat(chat_request: ChatRequest):
+
+def openai_chat_assist(chat_request: ChatRequest):
+    
     log_message("CHAT-Payload", {
-        "message": chat_request.message,
-        "history": chat_request.history
+    "message": chat_request.message,
+    "history": chat_request.history
     })
 
     system_message = ("You are a helpful assistant for an Electronic distributor company named 'CED.inc' "
@@ -151,7 +140,7 @@ def chat(chat_request: ChatRequest):
     response = openai.chat.completions.create(model=MODEL, messages=messages, tools=tools)
 
     if response.choices[0].finish_reason == "tool_calls":
-        log_message("TOOL-CALL", response.choices[0].message)
+        log_message("TOOL-CALL-START", f"tool-call-msg:\n{response.choices[0].message}")
 
         message = response.choices[0].message
         response = handle_tool_call(message)
@@ -161,8 +150,4 @@ def chat(chat_request: ChatRequest):
 
     log_message("CHAT-Response", response.choices[0].message.content)
 
-    return {"response": response.choices[0].message.content}
-
-@app.get("/test")
-def test():
-    return {"status": 200, "msg": "hello"}
+    return  response.choices[0].message.content

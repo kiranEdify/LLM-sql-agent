@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Box, Typography, TextField, IconButton, Avatar, Paper, CircularProgress } from "@mui/material";
+import { Box, Typography, TextField, IconButton, Avatar, Paper, CircularProgress, Select, MenuItem, FormControl } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import axios from "axios";
 import PersonIcon from "@mui/icons-material/Person";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import DeleteIcon from "@mui/icons-material/Delete";
+
+const models = ["GPT-4o-mini:8b", "Llama-3:8b", "Mistral-7b", "qwen2.5:32b"];
 
 const ChatUI = () => {
   const [messages, setMessages] = useState([
@@ -12,6 +14,7 @@ const ChatUI = () => {
   ]);
   const [currentMessage, setCurrentMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState(models[0]);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -27,8 +30,9 @@ const ChatUI = () => {
 
     try {
       const response = await axios.post("http://localhost:8000/chat", {
-        message: currentMessage,
+        user_msg: currentMessage,
         history: messages,
+        model: selectedModel,
       });
       setMessages([...newMessages, { role: "assistant", content: response.data.response, timestamp: new Date().toLocaleTimeString() }]);
     } catch (error) {
@@ -43,76 +47,38 @@ const ChatUI = () => {
   };
 
   return (
-    <Box
-      sx={{
-        height: "90vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#f5f5f5",
-        padding: "20px",
-        overflow: "hidden", // Prevents scrolling issue
-      }}
-    >
-      <Paper elevation={3} sx={{ 
-        width: "90%",
-        maxWidth: "1200px",
-        borderRadius: "10px",
-        padding: "20px",
-        height: "100vh", 
-        display: "flex",
-        // flex:1,
-        flexDirection: "column", 
-        overflow: "hidden"
-
-        }}>
+    <Box sx={{ height: "90vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "#f5f5f5", padding: "20px", overflow: "hidden" }}>
+      <Paper elevation={3} sx={{ width: "70%", maxWidth: "1200px", borderRadius: "12px", padding: "20px", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" gutterBottom>
-            Chatbot - <Typography component="span" color="primary" fontWeight="bold">qwen2.5:32b</Typography>
-          </Typography>
+          <Box display="flex" alignItems="center">
+            <Typography variant="h6" fontWeight={600} >
+              Chatbot -
+            </Typography>
+            <FormControl size="small"  sx={{ ml: 1, minWidth: 140,  }}>
+              <Select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                displayEmpty
+                sx={{ fontWeight: "bold", color: "#1976d2", backgroundColor: "transparent", boxShadow: "none", '.MuiOutlinedInput-notchedOutline': { border: 0 } }}
+              >
+                {models.map((model) => (
+                  <MenuItem key={model} value={model}>{model}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
           <IconButton color="error" onClick={clearChat}>
             <DeleteIcon />
           </IconButton>
         </Box>
 
-        <Box
-          sx={{
-            backgroundColor: "white",
-            borderRadius: "10px",
-            padding: "10px",
-            flex: 1,
-            overflowY: "auto",
-            minHeight: "0px", // Prevents overall page scrolling
-          }}
-        >
+        <Box sx={{ backgroundColor: "white", borderRadius: "10px", padding: "10px", flex: 1, overflowY: "auto", minHeight: "0px" }}>
           {messages.map((msg, index) => (
-            <Box
-              key={index}
-              display="flex"
-              alignItems="center"
-              justifyContent={msg.role === "user" ? "flex-end" : "flex-start"}
-              mb={2}
-            >
+            <Box key={index} display="flex" alignItems="center" justifyContent={msg.role === "user" ? "flex-end" : "flex-start"} mb={2}>
               {msg.role === "assistant" && <Avatar sx={{ bgcolor: "black", color: "white", marginRight: 1 }}><SupportAgentIcon/></Avatar>}
-              <Box
-                sx={{
-                  backgroundColor: msg.role === "user" ? "#e3f2fd" : "#d1c4e9",
-                  borderRadius: msg.role === "user" ? "18px 18px 5px 18px" : "18px 18px 18px 5px", // Adjusted for correct styling
-                  padding: "10px 15px",
-                  maxWidth: "75%",
-                  position: "relative",
-                }}
-              >
+              <Box sx={{ backgroundColor: msg.role === "user" ? "#e3f2fd" : "#d1c4e9", borderRadius: msg.role === "user" ? "18px 18px 5px 18px" : "18px 18px 18px 5px", padding: "10px 15px", maxWidth: "75%", position: "relative" }}>
                 <Typography>{msg.content}</Typography>
-                <Typography
-                  sx={{
-                    fontSize: "0.75rem",
-                    color: "gray",
-                    textAlign: "right",
-                    marginTop: "5px",
-                  }}
-                >
+                <Typography sx={{ fontSize: "0.75rem", color: "gray", textAlign: "right", marginTop: "5px" }}>
                   {msg.timestamp}
                 </Typography>
               </Box>

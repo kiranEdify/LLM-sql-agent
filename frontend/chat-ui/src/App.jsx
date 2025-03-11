@@ -68,7 +68,7 @@ const ChatUI = () => {
 
           }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" >
               {/* Chatbot - <Typography component="span" color="primary" fontWeight="bold">qwen2.5:32b</Typography> */}
               Chatbot - <Typography component="span" color="primary" fontWeight="bold">GPT-4o-mini:8b</Typography>
             </Typography>

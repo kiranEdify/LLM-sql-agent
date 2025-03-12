@@ -112,7 +112,7 @@ if st.button("Submit"):
 st.subheader("Chat History")
 for i, (query, answer, sql, result, elapsed_time, model_used) in enumerate(st.session_state.chat_history):
     with st.expander(f"Query {i+1}: {query}"):
-        st.text_area(f"Generated SQL Query (Model: {model_used}):", sql, height=100)
+        st.text_area(f"Generated SQL Query (Model: {model_used}):", sql, height=100 , key=f"Query {i+1}")
         st.write("Query Results:", result)
         st.write("Answer:", answer)
         st.write(f"sec: {elapsed_time} | Model: {model_used}")

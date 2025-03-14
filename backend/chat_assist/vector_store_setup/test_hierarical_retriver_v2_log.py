@@ -54,5 +54,5 @@ def hierarical_retriver(user_query):
 
 
 if __name__ == "__main__":
-    user_query = "list me all the customers"
+    user_query = "arizon state tax"
     hierarical_retriver(user_query)

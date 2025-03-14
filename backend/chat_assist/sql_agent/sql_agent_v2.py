@@ -93,7 +93,7 @@ class GenerateSQL(dspy.Signature):
     question: str = dspy.InputField()
     context: str = dspy.InputField()
     sql_query: str = dspy.OutputField()
-    # result: list = dspy.OutputField()
+    execution_result_observations: list = dspy.OutputField(desc="sql query execution results")
     answer: str = dspy.OutputField(
         desc="Answer to the user's question based on the query being executed"
     )
@@ -109,16 +109,6 @@ sql_query_generator = dspy.ReAct(
     ],
 )
 
-class userQueryProcessor(dspy.Signature):
-    """
-     Analyse whether the provided query's intent is to query the database or not
-    """
-    user_statement: str = dspy.InputField()
-    
-    answer: literal["yes","no"] = dspy.OutputField(
-        desc="Answer to the user's question based on the query being executed"
-    )
-
 
 def sql_agent(user_query: str,model=None):
     # Configure DSPy Language Model
@@ -130,8 +120,6 @@ def sql_agent(user_query: str,model=None):
     retrieve_schema = RetrieveSchema()
     query_context = retrieve_schema(user_query)
 
-
-
     response = sql_query_generator(question=user_query, context=query_context)
 
     
@@ -140,7 +128,12 @@ def sql_agent(user_query: str,model=None):
     print(response)
     print("\n\n")
 
-    return response.answer
+    output = {
+        "answer":response.answer,
+        "execution_result":response.execution_result_observations
+    }
+    # return response.answer 
+    return output
 
 
 if __name__ == "__main__":

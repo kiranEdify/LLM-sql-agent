@@ -30,7 +30,7 @@ selected_model = st.sidebar.selectbox("Choose LLM Model", AVAILABLE_MODELS, inde
 
 # Configure DSPy Language Model
 # lm = dspy.LM("openai/gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
-lm = dspy.LM(f"ollama_chat/{selected_model}", endpoint="http://localhost:11434")
+lm = dspy.LM(f"ollama_chat/{selected_model}", endpoint="http://localhost:11434",cache=False)
 dspy.configure(lm=lm)
 
 # Initialize ChromaDB client

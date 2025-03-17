@@ -110,7 +110,7 @@ sql_query_generator = dspy.ReAct(
 def sql_agent(user_query: str,model=None):
 
     # LLM Config for sql agent
-    lm = dspy.LM(f"ollama_chat/{model or 'qwen2.5:32b'}", endpoint="http://localhost:11434")
+    lm = dspy.LM(f"ollama_chat/{model or 'qwen2.5:32b'}", endpoint="http://localhost:11434",cache=False)
     dspy.configure(lm=lm)
 
     print("\n\n=======SQL-agent===============")

@@ -27,49 +27,16 @@ This project is a conversational SQL chatbot designed to generate and execute SQ
 │   ├── vector_store_setup
 │   │   ├── using_chroma_v2.py  # ChromaDB setup script
 │   ├── db_setup
-│   │   ├── using_sqlit_v2.py  # SQLite setup script
-├── frontend
-│   ├── (React-based chat interface - in progress)
+│   │   ├── using_sqlite_v2.py  # SQLite setup script
+├── frontend /chat-ui
+│   ├── React-based chat interface 
 └── README.md
 ```
 
-## 🛠️ Setup & Usage
 
-### 1️⃣ Running the SQL Agent with UI (Testing & Development)
+## 🛠️ Initial setup:
 
-Use Streamlit to run the chatbot with a UI:
-
-```bash
-streamlit run backend/sql_agent/with_ui_select_model_v3.py
-```
-
-### 2️⃣ Starting the Chat Web Server (Currently Using OpenAI)
-
-Run the backend API server using `uvicorn`:
-
-```bash
-uvicorn LLM-sql-agent.backend.web.api:app --reload
-```
-
-### 3️⃣ Running the React-based Chat App (Frontend - In Progress)
-
-Navigate to the `frontend` directory and start the React app:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### 4️⃣ Running the Gradio UI (For Backend Development & Testing with Ollama)
-
-To test the chatbot using Ollama's Qwen2.5-32B, run:
-
-```bash
-python -m LLM-sql-agent.chat_assist.using_ollama_qwen_api
-```
-
-### 5️⃣ Running ChromaDB Setup
+### 1️⃣ Running ChromaDB Setup
 
 To set up ChromaDB for vector storage:
 
@@ -78,20 +45,57 @@ cd LLM-sql_agent/backend/vector_store_setup
 python using_chroma_v2.py
 ```
 
-### 6️⃣ Running SQLite Setup
+### 2️⃣ Running SQLite Setup
 
 To set up the SQLite database:
 
 ```bash
 cd LLM-sql_agent/backend/db_setup
-python using_sqlit_v2.py
+python using_sqlite_v2.py
 ```
+
+## 🏃‍♂️ Usage Commands:
+
+### Running the SQL Agent with UI (Testing & Development)
+
+Use Streamlit to run the chatbot with a UI:
+
+```bash
+streamlit run backend/sql_agent/with_ui_select_model_v3.py
+```
+
+### Starting the Chat Web Server (Currently Using OpenAI)
+
+Run the backend API server using `uvicorn`:
+
+```bash
+uvicorn LLM-sql-agent.backend.web.api:app --reload
+```
+
+### Running the React-based Chat App (Frontend - In Progress)
+
+Navigate to the `frontend` directory and start the React app:
+
+```bash
+cd frontend/chat-ui
+npm install
+npm run dev
+```
+
+### Running the Gradio UI (For Backend Development & Testing with Ollama)
+
+To test the chatbot using Ollama's Qwen2.5-32B, run:
+
+```bash
+python -m LLM-sql-agent.chat_assist.using_ollama_qwen_api
+```
+
+
 
 ## 📝 Notes
 
 - This project currently supports both **OpenAI's GPT-4o-mini** and **Qwen2.5-32B via Ollama**.
 - The chatbot **only executes SELECT queries** for security.
-- The React frontend is under development.
 
 ## 📌 Future Enhancements
 

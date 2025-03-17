@@ -87,21 +87,13 @@ def ollama_chat_assist(chat_request:OllamaChatRequest):
         "model": chat_request.model
         })
         
-        # system_message = """
-            #     You are a helpful chat bot assistant for an Electronic parts distributor company named "CED-Consolidated Electrical Distributors, Inc". 
-            #     Give short, courteous answers, no more than 1 sentence.
-            #     Before placing an order, depict a bill representation as a table.
-            #     After placing an order, use creative emoji and end gracefully.
-            #     Before canceling an order, depict order details as a table fetched from db.
-            #     Always be accurate. If you don't know the answer, say so. and do not assume anything.
-            #     **always answer within the domain specified. if anything being asked outside of the domain reply out of scope gracefully 
-            # """
-
-        system_message = prompts["ollama_qwen_v1"]
+        #Building Agent behaviour
+        system_message = prompts["ollama_qwen_v2"] + "\n" + chat_request.context
         
-            
+        #Building Conversation list  
         messages = [{'role': 'system', 'content': system_message}] + chat_request.history + [{'role': 'user', 'content': chat_request.user_msg}]
 
+        #Initiating the LLM call
         response = chat_with_ollama(
              messages,
              tools=get_tools(),
@@ -110,15 +102,16 @@ def ollama_chat_assist(chat_request:OllamaChatRequest):
 
         if "message" in response:
             message = response["message"]
-            print("\nMessage:\n",chat_request.user_msg)
+            log_message("\nMessage:\n",chat_request.user_msg)
 
+            # Deciding whether to use a tool or not
             if "tool_calls" in message and message["tool_calls"]:
                 for tool in message["tool_calls"]:
                     tool_response = handle_tool_call(tool, model=chat_request.model)
                     messages.append(message)  # Append the original response
                     messages.append(tool_response)  # Append tool response
 
-                # Call API again with updated messages
+                # Call API again with updated tool-call response messages
                 response = chat_with_ollama(messages,model=chat_request.model)
 
             if "message" in response:

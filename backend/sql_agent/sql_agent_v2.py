@@ -56,14 +56,14 @@ class RetrieveSchema(dspy.Module):
 
         # Retrieve relevant tables
         table_results = db_collection.query(
-            query_texts=[user_query], n_results=5, where={"type": "table"}
+            query_texts=[user_query], n_results=3, where={"type": "table"}
         )
         tables = [doc["table_name"] for doc in table_results.get("metadatas", [])[0]]
 
         # Retrieve relevant columns
         column_results = db_collection.query(
             query_texts=[user_query],
-            n_results=5,
+            n_results=3,
             where={"$and": [{"type": {"$eq": "column"}}, {"table": {"$in": tables}}]},
         )
 
@@ -88,7 +88,7 @@ class RetrieveSchema(dspy.Module):
 
         return {"tables": tables, "columns": columns, "relationships": relationships}
 
-
+# Dspy - structured ouput (schema) - no prompts required
 class GenerateSQL(dspy.Signature):
     question: str = dspy.InputField()
     context: str = dspy.InputField()
@@ -97,11 +97,8 @@ class GenerateSQL(dspy.Signature):
     answer: str = dspy.OutputField(
         desc="Answer to the user's question based on the query being executed"
     )
-    # summary: str = dspy.OutputField(
-    #     desc="Summary should be based on the user's question and execution result"
-    # )
-
-
+    
+# Dspy module declaration
 sql_query_generator = dspy.ReAct(
     GenerateSQL,
     tools=[
@@ -109,17 +106,20 @@ sql_query_generator = dspy.ReAct(
     ],
 )
 
-
+# Natural language --> sql query --> data from DB
 def sql_agent(user_query: str,model=None):
-    # Configure DSPy Language Model
-    lm = dspy.LM("openai/gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
-    # lm = dspy.LM(f"ollama_chat/{model or 'llama3.1'}", endpoint="http://localhost:11434")
+
+    # LLM Config for sql agent
+    lm = dspy.LM(f"ollama_chat/{model or 'qwen2.5:32b'}", endpoint="http://localhost:11434")
     dspy.configure(lm=lm)
 
     print("\n\n=======SQL-agent===============")
     retrieve_schema = RetrieveSchema()
+    
+    #Context retrived for sql generation
     query_context = retrieve_schema(user_query)
 
+    #user_query + schema(context) --> sql query + execution 
     response = sql_query_generator(question=user_query, context=query_context)
 
     

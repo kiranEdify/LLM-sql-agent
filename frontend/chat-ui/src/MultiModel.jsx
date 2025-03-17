@@ -6,7 +6,26 @@ import PersonIcon from "@mui/icons-material/Person";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-const models = ["GPT-4o-mini:8b", "Llama-3:8b", "Mistral-7b", "qwen2.5:32b"];
+const models = [
+    "qwen2.5:32b",
+    "llama3.1",
+    // "deepseek-r1:32b",
+    // "deepseek-r1:8b",
+    // "qwen2.5:14b",
+    // "qwen2.5:32b",
+    // "qwen2.5:72b",
+    // "qwen2.5",
+    // "mistral",
+    // "llama3.1:70b",
+    // "gemma2:27b",
+    // "falcon:40b"
+];
+
+const users = {
+  "Alice":1,
+  "Bob":2
+}
+
 
 const ChatUI = () => {
   const [messages, setMessages] = useState([
@@ -15,6 +34,7 @@ const ChatUI = () => {
   const [currentMessage, setCurrentMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState(models[0]);
+  const [selectedUser, setSelectedUser] = useState(users.Alice);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -33,6 +53,7 @@ const ChatUI = () => {
         user_msg: currentMessage,
         history: messages,
         model: selectedModel,
+        context:`customer id : ${selectedUser}`
       });
       setMessages([...newMessages, { role: "assistant", content: response.data.response, timestamp: new Date().toLocaleTimeString() }]);
     } catch (error) {
@@ -48,7 +69,7 @@ const ChatUI = () => {
 
   return (
     <Box sx={{ height: "90vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "#f5f5f5", padding: "20px", overflow: "hidden" }}>
-      <Paper elevation={3} sx={{ width: "70%", maxWidth: "1200px", borderRadius: "12px", padding: "20px", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <Paper elevation={3} sx={{width: { xs: "100%", sm: "90%", md: "50%", }, maxWidth: "1200px", borderRadius: "12px", padding: "20px", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Box display="flex" alignItems="center">
             <Typography variant="h6" fontWeight={600} >
@@ -66,6 +87,21 @@ const ChatUI = () => {
                 ))}
               </Select>
             </FormControl>
+            <FormControl size="small"  sx={{ ml: 1, minWidth: 140,  }}>
+            <Select
+                value={selectedUser}
+                onChange={(e) => setSelectedUser(e.target.value)}
+                displayEmpty
+                sx={{ fontWeight: "bold", color: "#1976d2", backgroundColor: "transparent", boxShadow: "none", '.MuiOutlinedInput-notchedOutline': { border: 0 } }}
+              >
+                 {Object.entries(users).map(([name, id]) => (
+                    <MenuItem key={id} value={id}>
+                      {name}
+                    </MenuItem>
+                  ))}
+              </Select>
+             
+            </FormControl>
           </Box>
           <IconButton color="error" onClick={clearChat}>
             <DeleteIcon />
@@ -77,7 +113,7 @@ const ChatUI = () => {
             <Box key={index} display="flex" alignItems="center" justifyContent={msg.role === "user" ? "flex-end" : "flex-start"} mb={2}>
               {msg.role === "assistant" && <Avatar sx={{ bgcolor: "black", color: "white", marginRight: 1 }}><SupportAgentIcon/></Avatar>}
               <Box sx={{ backgroundColor: msg.role === "user" ? "#e3f2fd" : "#d1c4e9", borderRadius: msg.role === "user" ? "18px 18px 5px 18px" : "18px 18px 18px 5px", padding: "10px 15px", maxWidth: "75%", position: "relative" }}>
-                <Typography>{msg.content}</Typography>
+                <Typography><div dangerouslySetInnerHTML={{ __html: msg.content }} /></Typography>
                 <Typography sx={{ fontSize: "0.75rem", color: "gray", textAlign: "right", marginTop: "5px" }}>
                   {msg.timestamp}
                 </Typography>

@@ -36,7 +36,7 @@ def get_tools():
             "properties": {
                 "customer_id": {
                 "type": "string",
-                "description": "Unique identifier for the customer, must be provided by the customer do not generate/assume on your own"
+                "description": "Unique identifier for the customer, will be provided as context"
                 },
                 "order_items": {
                 "type": "array",

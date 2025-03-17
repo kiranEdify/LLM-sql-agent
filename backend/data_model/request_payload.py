@@ -9,4 +9,5 @@ class ChatRequest(BaseModel):
 class OllamaChatRequest(BaseModel):
     user_msg: str = ""
     history: list = []
-    model:str = "qwen2.5:32b"
+    model:str = "qwen2.5:32b",
+    context:str= ""

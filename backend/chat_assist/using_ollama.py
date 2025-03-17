@@ -8,6 +8,7 @@ from .prompts import prompts
 from ..data_model.request_payload import OllamaChatRequest
 from ..utils.loggers import log_message  # Import the logging function
 from .tools import get_tools
+from ..db_setup.tax_check_v3 import check_tax_rate, store_tax_rate  # Import the tax_check function
 
 # Initialization
 load_dotenv(override=True)
@@ -67,6 +68,8 @@ def handle_tool_call(tool, model):
             response_content = place_order(arguments.get("customer_id"), arguments.get("order_items"))
         elif function_name == "cancel_order":
             response_content = cancel_order(arguments.get("order_id"))
+        elif function_name == "check_tax_rate":
+            response_content = check_tax_rate(arguments.get("state"))  
         else:
             response_content = f"Error: Unknown function '{function_name}'."
         

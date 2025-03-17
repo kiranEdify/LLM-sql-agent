@@ -6,6 +6,7 @@ from ollama import  Client
 from db_setup.place_order_v2 import place_order
 from db_setup.cancel_order import cancel_order
 from sql_agent.sql_agent_v2 import sql_agent
+from db_setup.tax_check_v3 import check_tax_rate, store_tax_rate  # Import the tax_check function
 from .prompts import prompts
 import requests
 
@@ -68,6 +69,8 @@ def chatAssist_ollama():
             response_content = place_order(arguments.get("customer_id"), arguments.get("order_items"))
         elif function_name == "cancel_order":
             response_content = cancel_order(arguments.get("order_id"))
+        elif function_name == "check_tax_rate":
+            response_content = check_tax_rate(arguments.get("state"))  
         else:
             response_content = f"Error: Unknown function '{function_name}'."
         print("\n====== Tool call - END ==========\n")

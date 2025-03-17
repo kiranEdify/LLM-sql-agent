@@ -1,11 +1,43 @@
 import os
+import fitz  # PyMuPDF for extracting text from PDFs
+import docx  # Python-docx for extracting text from DOCX files
+from sentence_transformers import SentenceTransformer
 import chromadb
+from chromadb.config import Settings
+from chromadb.utils import embedding_functions
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
+
 
 # Initialize ChromaDB with persistence
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
-collection = chroma_client.get_or_create_collection(name="sql_schema")  # Uses default embedding model
+collection = chroma_client.get_or_create_collection(name="sql_schema")  # Collection to store schema and documents
 
-# Define schema chunks with tables and relationships
+# Initialize the Sentence Transformer Model (using a pre-trained model)
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+# Function to extract text from PDF
+def extract_text_from_pdf(pdf_path):
+    document = fitz.open(pdf_path)
+    text = ""
+    for page in document:
+        text += page.get_text()
+    return text
+
+# Function to extract text from DOCX
+def extract_text_from_docx(docx_path):
+    doc = docx.Document(docx_path)
+    text = ""
+    for para in doc.paragraphs:
+        text += para.text.strip() + "\n"  # Strip unnecessary spaces and add a new line after each paragraph.
+    return text
+
+# Function to create embeddings for the text
+def create_embeddings(text):
+    return model.encode([text])
+
+# Define schema chunks with tables and relationships (given schema)
 schema_chunks = [
     # Tables
     {"id": "suppliers_table", "text": "table: suppliers", "metadata": {"type": "table","table_name":"suppliers"}},
@@ -34,7 +66,7 @@ schema_chunks = [
 
 # Check existing documents to avoid duplication
 existing_ids = set(collection.get()["ids"])
-
+# Add schema chunks to the ChromaDB collection
 for chunk in schema_chunks:
     if chunk["id"] not in existing_ids:
         collection.add(
@@ -43,5 +75,50 @@ for chunk in schema_chunks:
             metadatas=[chunk["metadata"]]
         )
 
-print("\n\nSchema stored persistently in ChromaDB.\n\n")
+# Function to store text from documents in Chroma DB
+def store_document_in_chroma(document_path, document_name):
+    # Extract text from the document
+    if document_path.endswith('.pdf'):
+        document_text = extract_text_from_pdf(document_path)
+    elif document_path.endswith('.docx'):
+        document_text = extract_text_from_docx(document_path)
+    else:
+        raise ValueError("Unsupported file format")
+    
+    # Generate embeddings for the extracted text
+    embedding = create_embeddings(document_text)
+    
+    # Add document to Chroma DB
+    collection.add(
+        ids=[document_name],
+        documents=[document_text],
+        embeddings=embedding,
+        metadatas=[{"document_name": document_name}]
+    )
 
+# Store a sample DOCX in Chroma DB
+
+docx_path = os.getenv("SYS_PATH")  # Update this path to your docx file
+store_document_in_chroma(docx_path, "tax_rate")
+
+print("\n\nSchema and documents stored persistently in ChromaDB.\n\n")
+
+# Function to search for similar documents in Chroma DB
+def search_similar_documents(query, top_k=5):
+    query_embedding = create_embeddings(query)
+    results = collection.query(
+        query_embeddings=query_embedding,
+        n_results=top_k
+    )
+    
+    # Print the results for better understanding
+    print("Search Results:")
+    for result in results['documents']:
+        print(result)
+    
+    return results
+
+# Example search query
+query = "What is the tax rate of california?"
+search_results = search_similar_documents(query)
+print(f"Search results: {search_results}")

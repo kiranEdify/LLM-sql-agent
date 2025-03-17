@@ -80,10 +80,30 @@ def get_tools():
         }
     }
 
+    # Tax check function - just keep the function definition as it's already in place
+    check_tax_rate_function = {
+        "type": "function",
+        "function": {
+            "name": "check_tax_rate",
+            "description": "Check the tax rate for a specific state",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "description": "The state for which the tax rate is checked"
+                    }
+                },
+                "required": ["state"],
+            }
+        }
+    }
+
     tools = [
         sql_agent_function,
         place_order_function,
-        cancel_order_function
+        cancel_order_function,
+        check_tax_rate_function
         ]
     
     return tools

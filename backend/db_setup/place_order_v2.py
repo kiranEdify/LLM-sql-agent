@@ -1,7 +1,7 @@
 from sqlalchemy import text, create_engine
 import json
 from datetime import datetime
-
+from db_setup.tax_check_v3 import check_tax_rate, store_tax_rate  # Import functions from tax_check_v3
 
 def place_order(customer_id, order_items):
     engine = create_engine("sqlite:///electrical_parts.db", echo=True)
@@ -14,7 +14,6 @@ def place_order(customer_id, order_items):
                 text("SELECT * FROM customers WHERE customer_id = :customer_id"),
                 {"customer_id": customer_id},
             ).fetchone()
-
             if not result:
                 response["status"] = "error"
                 response["message"] = f"Customer ID {customer_id} does not exist."
@@ -54,6 +53,41 @@ def place_order(customer_id, order_items):
             # Round off total amount
             total_amount = round(total_amount, 2)
 
+            # Apply standard tax rate of 1%
+            standard_tax_rate = 0.01  # 1% tax rate
+            standard_tax_amount = total_amount * standard_tax_rate
+
+            # Get the customer's state
+            customer_state = result[5]  # Assuming 'state' is at index 5
+            customer_state = customer_state.lower()
+            
+            # Get the state-specific tax rate from the taxes table
+            state_tax_result = connection.execute(
+                text("SELECT tax_rate FROM taxes WHERE state = :state"),
+                {"state": customer_state},
+            ).fetchone()
+
+            if not state_tax_result:
+                # If tax rate is not found, check ChromaDB using tax_check_v3
+                print(f"No tax information available for {customer_state}, checking ChromaDB...")
+                tax_response = json.loads(check_tax_rate(customer_state))
+                if tax_response.get("status") == "success" and "tax_rate" in tax_response:
+                    state_tax_rate = tax_response["tax_rate"]
+                    print(f"Fetched tax rate from ChromaDB: {state_tax_rate * 100}%")
+                    store_tax_rate(customer_state, state_tax_rate)  # Store in SQLite
+                else:
+                    response["status"] = "error"
+                    response["message"] = f"No tax information available for state: {customer_state}."
+                    return json.dumps(response)
+            else:
+                state_tax_rate = state_tax_result[0]  # Accessing tax_rate by index
+
+            state_tax_amount = total_amount * state_tax_rate
+
+            # Add both standard tax and state-specific tax to the total amount
+            total_tax_amount = standard_tax_amount + state_tax_amount
+            total_amount_with_tax = round(total_amount + total_tax_amount, 2)
+
             # Get the maximum order_id and add 1, or start with 1 if no orders exist
             result = connection.execute(
                 text("SELECT COALESCE(MAX(order_id), 0) FROM orders")
@@ -61,7 +95,7 @@ def place_order(customer_id, order_items):
             order_id = result[0] + 1
 
             order_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            result = connection.execute(
+            connection.execute(
                 text(
                     "INSERT INTO orders (order_id, customer_id, order_date, total_amount) VALUES (:order_id, :customer_id, :order_date, :total_amount)"
                 ),
@@ -69,7 +103,7 @@ def place_order(customer_id, order_items):
                     "order_id": order_id,
                     "customer_id": customer_id,
                     "order_date": order_date,
-                    "total_amount": total_amount,
+                    "total_amount": total_amount_with_tax,  # Store total amount including both taxes
                 },
             )
 
@@ -94,6 +128,7 @@ def place_order(customer_id, order_items):
                     },
                 )
 
+            # Update stock quantities
             for new_stock, product_id in updated_stock:
                 connection.execute(
                     text(
@@ -105,6 +140,10 @@ def place_order(customer_id, order_items):
             response["status"] = "success"
             response["message"] = f"Order placed successfully with Order ID: {order_id}"
             response["order_id"] = order_id
+            response["total_amount"] = total_amount_with_tax
+            response["standard_tax_amount"] = standard_tax_amount
+            response["state_tax_amount"] = state_tax_amount
+            response["total_tax_amount"] = total_tax_amount
 
     except Exception as e:
         response["status"] = "error"

@@ -8,6 +8,5 @@ streamlit
 gradio
 ollama
 fastapi
+kafka-python
 
-# hugging face
-transformers

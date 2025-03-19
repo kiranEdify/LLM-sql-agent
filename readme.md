@@ -21,7 +21,9 @@ This project is a conversational SQL chatbot designed to generate and execute SQ
 │   ├── sql_agent
 │   │   ├── with_ui_select_model_v3.py  # Streamlit-based UI for SQL chatbot
 │   │   ├── chat_assist
-│   │   │   ├── using_ollama_qwen_api.py # Gradio UI for testing with Qwen2.5-32B
+│   │   │   ├── using_ollama_qwen_api_gradio.py # Gradio UI for testing with 
+|   |   |   ├── using_ollama.py # main function to run the ollama chat
+Qwen2.5-32B
 │   ├── web
 │   │   ├── api.py  # FastAPI-based chat backend
 │   ├── vector_store_setup

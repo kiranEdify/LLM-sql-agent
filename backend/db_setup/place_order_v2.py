@@ -1,7 +1,7 @@
 from sqlalchemy import text, create_engine
 import json
 from datetime import datetime
-from db_setup.tax_check_v3 import check_tax_rate, store_tax_rate  # Import functions from tax_check_v3
+from .tax_check_v3 import check_tax_rate, store_tax_rate  # Import functions from tax_check_v3
 
 def place_order(customer_id, order_items):
     engine = create_engine("sqlite:///electrical_parts.db", echo=True)

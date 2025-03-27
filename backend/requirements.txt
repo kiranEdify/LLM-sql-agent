@@ -9,4 +9,5 @@ gradio
 ollama
 fastapi
 kafka-python
-
+pymupdf
+python-docx

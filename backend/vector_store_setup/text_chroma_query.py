@@ -18,7 +18,8 @@ def query_schema(user_query: str, n_results: int = 5):
 
 # **Test the Chroma Query**
 # test_query = "Which table stores order details?"
-test_query = "i need categories list, which table can be used"
+# test_query = "i need categories list, which table can be used"
+test_query = "get some tax details"
 retrieved_info = query_schema(test_query)
 
 print("\nQuery:", test_query)

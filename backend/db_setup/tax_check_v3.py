@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, text
 import chromadb
-from sentence_transformers import SentenceTransformer
+
 import json
 import requests
 import re
@@ -9,15 +9,13 @@ import re
 chroma_client = chromadb.PersistentClient(path="./chroma_db")
 collection = chroma_client.get_collection(name="sql_schema")  # Use the collection where tax info is stored
 
-# Initialize the Sentence Transformer Model
-model = SentenceTransformer('all-MiniLM-L6-v2')
+
 
 # LLM API Configuration
 OLLAMA_HOST = "http://localhost:11434"
 MODEL_NAME = "qwen2.5:32b"
 
-def create_embeddings(text):
-    return model.encode([text])
+
 
 def store_tax_rate(state, tax_rate):
     """Stores the retrieved tax rate into the SQLite database."""
@@ -98,8 +96,7 @@ def check_tax_rate(state):
     # If SQL database query fails, fall back to ChromaDB
     try:
         query = f"tax rate of {state}"
-        query_embedding = create_embeddings(query)
-        results = collection.query(query_embeddings=query_embedding, n_results=5)
+        results = collection.query(query_texts=[query], n_results=5)
 
         if results['documents']:
             top_results = []

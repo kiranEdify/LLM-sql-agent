@@ -44,7 +44,7 @@ To set up ChromaDB for vector storage:
 
 ```bash
 cd LLM-sql_agent/backend/vector_store_setup
-python using_chroma_v2.py
+python -m using_chroma_v2.py
 ```
 
 ### 2️⃣ Running SQLite Setup
@@ -66,15 +66,15 @@ Use Streamlit to run the chatbot with a UI:
 streamlit run backend/sql_agent/with_ui_select_model_v3.py
 ```
 
-### Starting the Chat Web Server (Currently Using OpenAI)
+### Starting the Chat Web Server (using ollama)
 
 Run the backend API server using `uvicorn`:
 
 ```bash
-uvicorn LLM-sql-agent.backend.web.api:app --reload
+uvicorn LLM-sql-agent.backend.web.api_v2:app --reload
 ```
 
-### Running the React-based Chat App (Frontend - In Progress)
+### Running the React-based Chat App 
 
 Navigate to the `frontend` directory and start the React app:
 

@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from ..chat_assist import openai_chat_assist , ollama_chat_assist
-from ..data_model.request_payload import ChatRequest , OllamaChatRequest
+from ..chat_assist import ollama_chat_assist
+from ..data_model.request_payload import  OllamaChatRequest
 
 
 # configuring the origins
@@ -24,20 +24,20 @@ app.add_middleware(
 
 
 
-@app.post("/chat/openai")
-def chat(chat_request: ChatRequest):
+# @app.post("/chat/openai")
+# def chat(chat_request: ChatRequest):
    
-    try:
-        response = openai_chat_assist(chat_request)
-        return {
-            "status": 200,
-            "response": response
-        }
-    except Exception as e:
-        return {
-            "status": 500,
-            "error": str(e)
-        }
+#     try:
+#         response = openai_chat_assist(chat_request)
+#         return {
+#             "status": 200,
+#             "response": response
+#         }
+#     except Exception as e:
+#         return {
+#             "status": 500,
+#             "error": str(e)
+#         }
 
 @app.post("/chat")
 def chat(chat_request: OllamaChatRequest):
